@@ -43,7 +43,7 @@ fn main_inner() -> Result<(), ServerError> {
 }
 
 fn main() {
-    kime_version::cli_boilerplate!();
+    kime_version::daemon_boilerplate!().expect("Daemonize");
 
     assert!(
         kime_engine_cffi::check_api_version(),

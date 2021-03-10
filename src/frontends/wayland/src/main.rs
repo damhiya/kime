@@ -387,14 +387,7 @@ impl KimeContext {
     }
 }
 
-fn main() {
-    kime_version::cli_boilerplate!();
-
-    assert!(
-        kime_engine_cffi::check_api_version(),
-        "Engine version mismatched"
-    );
-
+fn server_main() {
     let display = Display::connect_to_env().expect("Failed to connect wayland display");
     let mut event_queue = display.create_event_queue();
     let attached_display = display.attach(event_queue.token());
@@ -518,3 +511,15 @@ fn main() {
         Err(e) => log::error!("Server aborted due to IO Error: {}", e),
     }
 }
+
+fn main() {
+    kime_version::daemon_boilerplate!().expect("Daemonize");
+
+    assert!(
+        kime_engine_cffi::check_api_version(),
+        "Engine version mismatched"
+    );
+
+    server_main();
+}
+

@@ -5,6 +5,7 @@
 ### Breaking
 
 * Include english layouts [#347](https://github.com/Riey/kime/issues/347)
+* Daemonize xim, wayland server
 
 ### Improve
 

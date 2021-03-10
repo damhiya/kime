@@ -7,3 +7,11 @@ license = "GPL-3.0"
 
 [build-dependencies]
 shadow-rs = "0.5.24"
+
+[dependencies]
+kime-log = { path = "../log" }
+
+daemonize = "0.4.1"
+simplelog = "0.9.0"
+pico-args = "0.4.0"
+xdg = "2.2.0"

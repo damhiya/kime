@@ -1,3 +1,8 @@
+pub use daemonize;
+pub use kime_log;
+pub use pico_args;
+pub use xdg;
+
 #[doc(hidden)]
 pub mod build {
     include!(concat!(env!("OUT_DIR"), "/shadow.rs"));
@@ -6,7 +11,7 @@ pub mod build {
 #[macro_export]
 macro_rules! cli_boilerplate {
     ($($help:expr,)*) => {{
-        let mut args = pico_args::Arguments::from_env();
+        let mut args = $crate::pico_args::Arguments::from_env();
 
         if args.contains(["-h", "--help"]) {
             println!("-h or --help: show help");
@@ -24,12 +29,12 @@ macro_rules! cli_boilerplate {
         }
 
         let level = if args.contains("--verbose") {
-            kime_log::LevelFilter::Trace
+            $crate::kime_log::LevelFilter::Trace
         } else {
-            kime_log::LevelFilter::Info
+            $crate::kime_log::LevelFilter::Info
         };
 
-        kime_log::enable_logger(level);
+        $crate::kime_log::enable_logger(level);
 
         log::info!(
             "Start {}: {}",
@@ -38,6 +43,45 @@ macro_rules! cli_boilerplate {
         );
 
         args
+    }};
+}
+
+#[macro_export]
+macro_rules! daemon_boilerplate {
+    ($($help:expr,)*) => {{
+        let mut args = $crate::cli_boilerplate!(
+            "-d: run as normal program",
+            "-D: run as daemon(default)",
+            $($help,)*
+        );
+
+        let run_daemon = if args.contains("-D") {
+            false
+        } else {
+            true
+        };
+
+        if run_daemon {
+            let pid = $crate::xdg::BaseDirectories::new().ok().and_then(|dir|
+                dir.place_runtime_file(concat!(env!("CARGO_PKG_NAME"), ".pid")).ok()
+            ).unwrap_or(concat!("/tmp/", env!("CARGO_PKG_NAME"), ".pid").into());
+
+            use $crate::daemonize::DaemonizeError::*;
+
+            match $crate::daemonize::Daemonize::new()
+                .pid_file(pid)
+                .working_directory("/tmp")
+                .start() {
+                    Ok(_) => Ok(()),
+                    Err(LockPidfile(_)) => {
+                        log::warn!("Already running");
+                        ::std::process::exit(0);
+                    }
+                    err => err,
+                }
+        } else {
+            Ok(())
+        }
     }};
 }
 
